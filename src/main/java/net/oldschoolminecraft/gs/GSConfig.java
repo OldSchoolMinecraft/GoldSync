@@ -27,6 +27,7 @@ public class GSConfig extends Configuration
         generateConfigOption("db.bridgecordDatabase", "bridgecord");
         generateConfigOption("db.username", "root");
         generateConfigOption("db.password", "password");
+        generateConfigOption("db.pollRateInMinutes", 5);
 
         generateConfigOption("discord.guildID", "GUILD_ID");
     }

@@ -14,17 +14,18 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.HashMap;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 public class DBPollThread
 {
     private GoldSync plugin;
     private HashMap<String, BasicDataSource> dataSources = new HashMap<>();
+    private final int pollRateInMinutes;
 
     public DBPollThread(GoldSync plugin)
     {
         this.plugin = plugin;
-
-
+        this.pollRateInMinutes = plugin.getConfig().getInt("db.pollRateInMinutes", 5);
     }
 
     public void run()
@@ -36,12 +37,11 @@ public class DBPollThread
                 Connection gsDBConnection = getConnection(plugin.getConfig().getString("db.mainDatabase"));
                 Connection bcordDBConnection = getConnection(plugin.getConfig().getString("db.bridgecordDatabase"));
 
-                // poll rank_notifs table for new entries, and send to function for processing
                 processRanks(gsDBConnection);
                 processEco(gsDBConnection);
                 processDiscordRoles(bcordDBConnection);
 
-                // poll eco_rewards table for new entries, and send to function for processing
+                TimeUnit.MILLISECONDS.sleep((1000L * 60L) * pollRateInMinutes); // sleep before next poll
             } catch (Exception ex) {
                 ex.printStackTrace(System.err);
             }
