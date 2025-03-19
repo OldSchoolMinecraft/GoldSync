@@ -1,0 +1,8 @@
+name: GoldSync
+version: 1.0
+author: moderator_man
+main: net.oldschoolminecraft.gs.GoldSync
+depend:
+  - PermissionsEx
+  - DiscordCore
+  - Essentials
