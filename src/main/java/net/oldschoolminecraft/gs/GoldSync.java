@@ -13,6 +13,7 @@ public class GoldSync extends JavaPlugin
     public PermissionsEx pexHandle;
     public DiscordCore dbcHandle;
     public Essentials essHandle;
+    private DBPollThread dbPollThread;
 
     @Override
     public void onEnable()
@@ -22,6 +23,9 @@ public class GoldSync extends JavaPlugin
         essHandle = (Essentials) getServer().getPluginManager().getPlugin("Essentials");
 
         config = new GSConfig(new File(getDataFolder(), "config.yml"));
+
+        dbPollThread = new DBPollThread(this);
+        dbPollThread.start();
 
         System.out.println("GoldSync enabled");
     }

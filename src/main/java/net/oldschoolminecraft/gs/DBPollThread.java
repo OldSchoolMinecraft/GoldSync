@@ -16,10 +16,10 @@ import java.util.HashMap;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
-public class DBPollThread
+public class DBPollThread extends Thread
 {
     private GoldSync plugin;
-    private HashMap<String, BasicDataSource> dataSources = new HashMap<>();
+    private final HashMap<String, BasicDataSource> dataSources = new HashMap<>();
     private final int pollRateInMinutes;
 
     public DBPollThread(GoldSync plugin)
