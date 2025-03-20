@@ -56,30 +56,35 @@ public class DBPollThread extends Thread
             ResultSet rs = stmt.executeQuery();
             while (rs.next())
             {
-                // process new entry
-                String username = rs.getString("username");
-                String rankName = rs.getString("rankName");
-                boolean removal = rs.getBoolean("removal");
-
-                if (removal)
+                try
                 {
-                    // remove rank from user
-                    PermissionsEx.getPermissionManager().getUser(username).removeGroup(rankName);
+                    // process new entry
+                    String username = rs.getString("username");
+                    String rankName = rs.getString("rankName");
+                    boolean removal = rs.getBoolean("removal");
 
-                    Player player = plugin.getServer().getPlayer(username);
-                    if (player != null) player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You have lost the &a" + rankName + " &7rank!"));
+                    if (removal)
+                    {
+                        // remove rank from user
+                        PermissionsEx.getPermissionManager().getUser(username).removeGroup(rankName);
 
-                    // remove record
-                    rs.deleteRow();
-                } else {
-                    // add rank to user
-                    PermissionsEx.getPermissionManager().getUser(username).addGroup(rankName);
+                        Player player = plugin.getServer().getPlayer(username);
+                        if (player != null) player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You have lost the &a" + rankName + " &7rank!"));
 
-                    Player player = plugin.getServer().getPlayer(username);
-                    if (player != null) player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You have received the &a" + rankName + " &7rank!"));
+                        // remove record
+                        rs.deleteRow();
+                    } else {
+                        // add rank to user
+                        PermissionsEx.getPermissionManager().getUser(username).addGroup(rankName);
 
-                    // remove record
-                    rs.deleteRow();
+                        Player player = plugin.getServer().getPlayer(username);
+                        if (player != null) player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You have received the &a" + rankName + " &7rank!"));
+
+                        // remove record
+                        rs.deleteRow();
+                    }
+                } catch (Exception ex) {
+                    System.out.println("[GoldSync] Error processing rank assignment/removal: " + ex.getMessage());
                 }
             }
             connection.close();
@@ -94,20 +99,25 @@ public class DBPollThread extends Thread
             ResultSet rs = stmt.executeQuery();
             while (rs.next())
             {
-                // process new entry
-                String username = rs.getString("username");
-                int amount = rs.getInt("amount");
-                String reason = rs.getString("reason");
+                try
+                {
+                    // process new entry
+                    String username = rs.getString("username");
+                    int amount = rs.getInt("amount");
+                    String reason = rs.getString("reason");
 
-                // add amount to user's balance
-                plugin.essHandle.getUser(username).giveMoney(amount);
+                    // add amount to user's balance
+                    plugin.essHandle.getUser(username).giveMoney(amount);
 
-                Player player = plugin.getServer().getPlayer(username);
-                if (player != null)
-                    player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You have received &a$" + amount + " &7for: &e" + reason));
+                    Player player = plugin.getServer().getPlayer(username);
+                    if (player != null)
+                        player.sendMessage(ChatColor.translateAlternateColorCodes('&', "&7You have received &a$" + amount + " &7for: &e" + reason));
 
-                // remove record
-                rs.deleteRow();
+                    // remove record
+                    rs.deleteRow();
+                } catch (Exception ex) {
+                    System.out.println("[GoldSync] Error processing economy reward: " + ex.getMessage());
+                }
             }
             connection.close();
         }
@@ -121,27 +131,35 @@ public class DBPollThread extends Thread
             ResultSet rs = stmt.executeQuery();
             while (rs.next())
             {
-                // process new entry
-                String username = rs.getString("username");
-                String roleID = rs.getString("role");
-                boolean removal = rs.getBoolean("removal");
+                try
+                {
+                    // process new entry
+                    String username = rs.getString("username");
+                    String roleID = rs.getString("role");
+                    boolean removal = rs.getBoolean("removal");
 
-                // we will need to check the link_data table to see if they have a discord ID linked
-                String discordID = getLinkedDiscordID(connection, username);
+                    // we will need to check the link_data table to see if they have a discord ID linked
+                    String discordID = getLinkedDiscordID(connection, username);
 
-                if (discordID == null) // not linked, can't assign role
-                    continue;
+                    if (discordID == null) // not linked, can't assign role
+                    {
+                        System.out.println("[GoldSync] User " + username + " is not linked to a Discord account, skipping role assignment/removal.");
+                        continue;
+                    }
 
-                // add or remove role from user
-                User discordUser = plugin.dbcHandle.getDiscordBot().jda.getUserById(discordID);
-                Guild guild = plugin.dbcHandle.getDiscordBot().jda.getGuildById(plugin.getConfig().getString("discord.guildID"));
-                Member member = Objects.requireNonNull(guild).getMember(Objects.requireNonNull(discordUser));
+                    // add or remove role from user
+                    User discordUser = plugin.dbcHandle.getDiscordBot().jda.getUserById(discordID);
+                    Guild guild = plugin.dbcHandle.getDiscordBot().jda.getGuildById(plugin.getConfig().getString("discord.guildID"));
+                    Member member = Objects.requireNonNull(guild).getMember(Objects.requireNonNull(discordUser));
 
-                if (removal) guild.removeRoleFromMember(Objects.requireNonNull(member), Objects.requireNonNull(guild.getRoleById(roleID))).queue();
-                else guild.addRoleToMember(Objects.requireNonNull(member), Objects.requireNonNull(guild.getRoleById(roleID))).queue();
+                    if (removal) guild.removeRoleFromMember(Objects.requireNonNull(member), Objects.requireNonNull(guild.getRoleById(roleID))).queue();
+                    else guild.addRoleToMember(Objects.requireNonNull(member), Objects.requireNonNull(guild.getRoleById(roleID))).queue();
 
-                // remove record
-                rs.deleteRow();
+                    // remove record
+                    rs.deleteRow();
+                } catch (Exception ex) {
+                    System.out.println("[GoldSync] Error processing Discord role assignment/removal: " + ex.getMessage());
+                }
             }
         }
     }
